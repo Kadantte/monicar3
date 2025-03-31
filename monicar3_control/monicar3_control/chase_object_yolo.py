@@ -6,7 +6,7 @@ referenced from tizianofiorenzani/ros_tutorials
 url: https://github.com/tizianofiorenzani/ros_tutorials
 
 Subscribes to
-    /darknet_ros/bounding_boxes
+    /yolo_ros/detection_result
 Publishes commands to
     /dkcar/control/cmd_vel
 
@@ -17,40 +17,32 @@ from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.logging import get_logger
 from geometry_msgs.msg import Twist
-from darknet_ros_msgs.msg import BoundingBoxes
+from monicar3_interfaces.msg import Detections
 from .submodules.myutil import clamp
-
-PICTURE_SIZE = 416.0
+from .submodules.myconfig import *
 
 class ChaseObject(Node):
     def __init__(self):
 
         super().__init__('chase_object_node')
 
-        self.declare_parameters(
-            namespace='',
-            parameters=[
-                ('k_steer', 2.5),
-                ('k_throttle', 0.2),
-                ('DETECT_CLASS', "cup"),
-           ])
-        self.get_logger().info("Setting Up the Node...")
+        self.declare_parameter('det_class', 'cup')
+        self.declare_parameter('k_steer', 2.5)
+        self.declare_parameter('k_throttle', 0.2)
 
+        self.get_logger().info("Setting Up the Node...")
+        self.DETECT_CLASS = self.get_parameter('det_class').get_parameter_value().string_value
         self.K_LAT_DIST_TO_STEER = self.get_parameter_or('k_steer').get_parameter_value().double_value
         self.K_LAT_DIST_TO_THROTTLE = self.get_parameter_or('k_throttle').get_parameter_value().double_value
-        self.DETECT_CLASS = self.get_parameter_or('DETECT_CLASS').get_parameter_value().string_value
 
-        print('k_steer: %s, k_throttle: %s, DETECT_CLASS: %s'%
-            (self.K_LAT_DIST_TO_STEER,
-            self.K_LAT_DIST_TO_THROTTLE,
-            self.DETECT_CLASS)
-        )
+        print('det_class: %s'%(self.DETECT_CLASS))
+        print('k_steer: %.2f, k_throttle: %.2f'%(self.K_LAT_DIST_TO_STEER, self.K_LAT_DIST_TO_THROTTLE))
 
         self.blob_x = 0.0
         self.blob_y = 0.0
         self._time_detected = 0.0
 
-        self.sub_center = self.create_subscription(BoundingBoxes, "/darknet_ros/bounding_boxes", self.update_object, 10)
+        self.sub_center = self.create_subscription(Detections, "/yolo_ros/detection_result", self.update_object, 10)
         self.get_logger().info("Subscriber set")
 
         self.pub_twist = self.create_publisher(Twist, "/dkcar/control/cmd_vel", 10)
@@ -70,17 +62,23 @@ class ChaseObject(Node):
         return time.time() - self._time_detected < 1.0
 
     def update_object(self, message):
-        for box in message.bounding_boxes:
-            #
-            #yolov4-tiny, 416x416
-            if box.class_id == self.DETECT_CLASS:
-                self.blob_x = float((box.xmax + box.xmin)/PICTURE_SIZE/2.0) - 0.5
-                self.blob_y = float((box.ymax + box.ymin)/PICTURE_SIZE/2.0) - 0.5
+        #ignore 1 second previous message
+        msg_secs = message.header.stamp.sec
+        now = self.get_clock().now().to_msg().sec
+        if (msg_secs + 1 < now):
+            self.get_logger().info("Stamp %d, %d" %(now, msg_secs ) )
+            return
+
+        idx = 0
+        for box in message.class_id:
+            print(message.full_class_list[box])
+            if (message.full_class_list[box] == self.DETECT_CLASS1):
+                self.blob_x = float(message.bbx_center_x[idx]/PICTURE_SIZE_X*2 - 1.0)
+                self.blob_y = float(message.bbx_center_y[idx]/PICTURE_SIZE_Y*2 - 1.0)
                 self._time_detected = time.time()
-                self.get_logger().info("object detected: %.2f  %.2f "%(self.blob_x, self.blob_y))
-                #self.get_logger().info(
-                #    "Xmin: {}, Xmax: {} Ymin: {}, Ymax: {} Class: {}".format
-                #    (box.xmin, box.xmax, box.ymin, box.ymax, box.Class) )
+
+                self.get_logger().info("Detected: %.2f  %.2f"%(self.blob_x, self.blob_y))
+            idx = idx + 1
 
     def get_control_action(self):
         """

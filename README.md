@@ -124,7 +124,7 @@ There's four modes for controlling RC Car
 
 * JoyStick Control
 * Keyboard Control
-* Blob, Yolo4 Control
+* Blob, Yolo11 Control
 * React to traffic signal 
 
 ### 3. **monicar3_joy package**
@@ -195,7 +195,7 @@ Debugging with `rqt_image_view`
 ros2 run rqt_image_view rqt_image_view
 ```
 
-### **4. Yolo4_tracking**
+### **4. Yolo11_tracking**
 
 Find the object of the Jetson Nano on the screen and change the direction of the wheel accordingly.
 
@@ -206,26 +206,36 @@ Find the object of the Jetson Nano on the screen and change the direction of the
 
 
 ```bash
-#terminal #1
-# object detect using Yolo_v4
-$ ros2 launch darknet_ros yolov4-tiny.launch.py
-
-#terminal #2
 # camera publish, object x/y -> car move
 $ ros2 launch monicar3_control yolo_all.launch.py 
 ```
+#For debugging
+# camera image publisher
+$ ros2 launch monicar3_cv csicam.launch.py
 
-### **5. Yolo4 traffic signal**
+# detect object, then publish bounding boxes
+$ ros2 launch monicar3_yolo yolo.launch.py
+
+# object -> start, stop, turn left, turn left
+$ ros2 launch monicar3_control yolo_chase.launch.py
+
+### **5. Yolo11 traffic signal**
 
 Train traffic signal, then Jetson nano will react to the traffic signal
 
 
 ```bash
 #terminal #1
-# object detect using Yolo_v4
-$ ros2 launch darknet_ros yolov4-monicar3.launch.py
-
-#terminal #2
 # camera publish, object -> start, stop, turn left, turn left
 $ ros2 launch monicar3_control traffic_all.launch.py
+
+#For debugging
+# camera image publisher
+$ ros2 launch monicar3_cv csicam.launch.py
+
+# detect object, then publish bounding boxes
+$ ros2 launch monicar3_yolo yolo.launch.py
+
+# object -> start, stop, turn left, turn left
+$ ros2 launch monicar3_control yolo_traffic.launch.py
 ```

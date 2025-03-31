@@ -13,7 +13,7 @@ class YoloROS(Node):
     def __init__(self):
         super().__init__('yolo_ros_node')
 
-        self.declare_parameter("yolo_model",                "monicar311n_ncnn_model")
+        self.declare_parameter("yolo_model",                "monicar3_ncnn_model")
         self.declare_parameter("input_rgb_topic",           "/image_raw")
         self.declare_parameter("publish_annotated_image",   True)
         self.declare_parameter("rgb_topic",                 "/yolo_ros/rgb_image")
