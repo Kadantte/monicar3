@@ -1,8 +1,6 @@
 import rclpy
 import time, os
 from rclpy.node import Node
-from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, qos_profile_sensor_data
-
 from sensor_msgs.msg import Image
 from monicar3_interfaces.msg import Detections
 from cv_bridge import CvBridge
@@ -13,10 +11,8 @@ class YoloROS(Node):
     def __init__(self):
         super().__init__('yolo_ros_node')
 
-        self.declare_parameter("yolo_model",                "monicar3.pt")
+        self.declare_parameter("yolo_model",                "yolo11n.pt")
         self.declare_parameter("input_rgb_topic",           "/image_raw")
-        self.declare_parameter("publish_annotated_image",   True)
-        self.declare_parameter("rgb_topic",                 "/yolo_ros/rgb_image")
         self.declare_parameter("annotated_topic",           "/yolo_ros/annotated_image")
         self.declare_parameter("detailed_topic",            "/yolo_ros/detection_result")
         self.declare_parameter("threshold",                 0.5)
@@ -24,8 +20,6 @@ class YoloROS(Node):
 
         self.yolo_model                 = self.get_parameter("yolo_model").get_parameter_value().string_value
         self.input_rgb_topic            = self.get_parameter("input_rgb_topic").get_parameter_value().string_value
-        self.publish_annotated_image    = self.get_parameter("publish_annotated_image").get_parameter_value().bool_value
-        self.rgb_topic                  = self.get_parameter("rgb_topic").get_parameter_value().string_value
         self.annotated_topic            = self.get_parameter("annotated_topic").get_parameter_value().string_value
         self.detailed_topic             = self.get_parameter("detailed_topic").get_parameter_value().string_value
         self.threshold                  = self.get_parameter("threshold").get_parameter_value().double_value
@@ -42,21 +36,12 @@ class YoloROS(Node):
 
         self.get_logger().info("Setting Up yolo_ros_node...")
         self.get_logger().info("Yolo model: %s, %s, %.2f "%(self.yolo_model , self.device, self.threshold))
-
-        #please run only once to convert from pt to ncnn
-        #self.model.export(format="ncnn")    # create ncnn model   
         
         self.model.fuse()
-        self.subscriber_qos_profile = QoSProfile(reliability=QoSReliabilityPolicy.BEST_EFFORT,
-                                                 history=QoSHistoryPolicy.KEEP_LAST,
-                                                 depth=1)
 
-        self.subscription = self.create_subscription(Image, self.input_rgb_topic, self.image_callback, qos_profile=self.subscriber_qos_profile)
-        self.publisher_results  = self.create_publisher(Detections, self.detailed_topic, qos_profile_sensor_data)
-        self.publisher_rgb      = self.create_publisher(Image, self.rgb_topic, qos_profile_sensor_data)
-
-        if self.publish_annotated_image:
-            self.publisher_image    = self.create_publisher(Image, self.annotated_topic, qos_profile_sensor_data)
+        self.subscription = self.create_subscription(Image, self.input_rgb_topic, self.image_callback, 10)
+        self.publisher_results  = self.create_publisher(Detections, self.detailed_topic, 10)
+        self.publisher_image    = self.create_publisher(Image, self.annotated_topic, 10)
 
         self.counter = 0
         self.time = 0
@@ -67,13 +52,11 @@ class YoloROS(Node):
     def image_callback(self, rgb_image):
         start = time.time_ns()
         cv_image = self.bridge.imgmsg_to_cv2(rgb_image, desired_encoding="bgr8")
-
         self.result = self.model.predict(source = cv_image,
                                          conf=self.threshold,
                                          device=self.device,
                                          verbose=False)
 
-        
         # Calculate and log processing time
         #end = time.time_ns()
         #process_time = (end - start) / 1e6  # Convert to milliseconds
@@ -98,7 +81,6 @@ class YoloROS(Node):
             self.detection_msg.confidence   = []
         
             for bbox, cls, conf in zip(self.result[0].boxes.xywh, self.result[0].boxes.cls, self.result[0].boxes.conf):
-
                 self.detection_msg.bbx_center_x.append(int(bbox[0]))
                 self.detection_msg.bbx_center_y.append(int(bbox[1]))
                 self.detection_msg.bbx_size_w.append(int(bbox[2]))
@@ -107,13 +89,10 @@ class YoloROS(Node):
                 self.detection_msg.confidence.append(float(conf))
 
             self.publisher_results.publish(self.detection_msg)
-            self.publisher_rgb.publish(rgb_image)
+            self.output_image = self.result[0].plot(conf=True, line_width=1, font_size=1, font="Arial.ttf", labels=True, boxes=True)
+            result_msg        = self.bridge.cv2_to_imgmsg(self.output_image, encoding="bgr8")               
+            self.publisher_image.publish(result_msg)
 
-            if self.publish_annotated_image:
-                self.output_image = self.result[0].plot(conf=True, line_width=1, font_size=1, font="Arial.ttf", labels=True, boxes=True)
-                result_msg        = self.bridge.cv2_to_imgmsg(self.output_image, encoding="bgr8")
-                
-                self.publisher_image.publish(result_msg)
         else:
             self.detection_msg.detections = False
 
@@ -133,7 +112,6 @@ class YoloROS(Node):
             self.get_logger().info('RGB callback execution time for 100 loops: %d ms' % ((self.time/100)/1000000))
             self.time = 0
             self.counter = 0
-
 
 def main(args=None):
     rclpy.init(args=args)

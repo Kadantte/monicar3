@@ -20,7 +20,7 @@ def generate_launch_description():
     DeclareLaunchArgument('motor_parameter', default_value=motor_parameter),
 
     Node(
-      package='monicar3_control', executable='chase_traffic_yolo', name='traffic_node', 
+      package='monicar3_control', executable='react_traffic', name='traffic_node', 
 	    output='screen', emulate_tty=True,
       parameters=[motor_parameter],
       namespace='',

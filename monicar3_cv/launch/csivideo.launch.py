@@ -12,7 +12,7 @@ def generate_launch_description():
     'cv_parameter',
     default=os.path.join(
       get_package_share_directory('monicar3_cv'),
-      'param/cvparam.yaml'
+      'param/camera.yaml'
     )
   )
 

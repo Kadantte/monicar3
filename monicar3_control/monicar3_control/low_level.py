@@ -44,7 +44,7 @@ class ServoConvert:
 class DkLowLevelCtrl(Node):
     def __init__(self):
 
-        super().__init__('blob_chase_node')
+        super().__init__('low_level_node')
         self.declare_parameters(
             namespace='',
             parameters=[

@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    camport: 0
+    blob_min: [70,120,0]
+    blob_max: [150, 255, 140]

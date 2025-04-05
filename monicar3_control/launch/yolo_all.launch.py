@@ -13,11 +13,16 @@ def generate_launch_description():
 
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([
+        FindPackageShare("monicar3_yolo"), '/launch', '/yolo.launch.py'])
+    ),
+
+    IncludeLaunchDescription(
+      PythonLaunchDescriptionSource([
         FindPackageShare("monicar3_control"), '/launch', '/yolo_chase.launch.py'])
     ),
 
     IncludeLaunchDescription(
       PythonLaunchDescriptionSource([
-        FindPackageShare("monicar3_control"), '/launch', '/blob_chase.launch.py'])
+        FindPackageShare("monicar3_control"), '/launch', '/lowlevel.launch.py'])
     ),
   ])
