@@ -28,7 +28,7 @@ class CameraeNode(Node):
         print("Camera Node created")
 
         # Create a timer that will gate the node actions twice a second
-        timer_period = 0.05  # seconds
+        timer_period = 0.1  # seconds
         self.timer = self.create_timer(timer_period, self.node_callback)
 
     def node_callback(self):

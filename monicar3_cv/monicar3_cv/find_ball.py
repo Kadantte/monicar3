@@ -25,8 +25,6 @@ import rclpy
 from rclpy.node import Node
 import cv2
 import time
-from rclpy.qos import qos_profile_sensor_data
-
 from sensor_msgs.msg        import Image
 from geometry_msgs.msg      import PointStamped
 from cv_bridge              import CvBridge, CvBridgeError
@@ -79,12 +77,12 @@ class FindballROS(Node):
         self._t0 = time.time()
 
         self.get_logger().info(">> Publishing image to topic image_blob")
-        self.image_pub = self.create_publisher(Image, "/blob/image_blob", qos_profile_sensor_data)
-        self.mask_pub = self.create_publisher(Image, "/blob/image_mask", qos_profile_sensor_data)
-        self.blob_pub = self.create_publisher(PointStamped, "/blob/point_blob", qos_profile_sensor_data)
+        self.image_pub = self.create_publisher(Image, "/blob/image_blob", 10)
+        self.mask_pub = self.create_publisher(Image, "/blob/image_mask", 10)
+        self.blob_pub = self.create_publisher(PointStamped, "/blob/point_blob", 10)
 
         self.bridge = CvBridge()
-        self.image_sub = self.create_subscription(Image, "/image_raw",self.callback, qos_profile_sensor_data)
+        self.image_sub = self.create_subscription(Image, "/image_raw", self.callback, 10)
         self.get_logger().info("<< Subscribed to topic /image_raw")
         self.blob_point = PointStamped()
 

@@ -11,7 +11,7 @@ Publishes commands to
     /dkcar/control/cmd_vel
 
 """
-import time
+from time import sleep, time
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
@@ -70,7 +70,7 @@ class TrafficObject(Node):
 
     @property
     def is_detected(self):
-        return time.time() - self._time_detected < 1.0
+        return time() - self._time_detected < 1.0
 
     def update_object(self, message):
         #ignore 1 second previous message

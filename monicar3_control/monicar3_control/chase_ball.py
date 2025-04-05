@@ -11,12 +11,12 @@ Publishes commands to
     /dkcar/control/cmd_vel
 
 """
-import time
+from time import sleep, time
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from rclpy.logging import get_logger
-from geometry_msgs.msg import Twist, Point
+from geometry_msgs.msg import Twist, PointStamped
 from .submodules.myutil import clamp
 
 class ChaseBall(Node):
@@ -44,7 +44,7 @@ class ChaseBall(Node):
         self.blob_y = 0.0
         self._time_detected = 0.0
 
-        self.sub_center = self.create_subscription(Point, "/blob/point_blob", self.update_ball, 10)
+        self.sub_center = self.create_subscription(PointStamped, "/blob/point_blob", self.update_ball, 10)
         self.get_logger().info("Subscriber set")
 
         self.pub_twist = self.create_publisher(Twist, "/dkcar/control/cmd_vel", 10)
@@ -61,13 +61,20 @@ class ChaseBall(Node):
 
     @property
     def is_detected(self):
-        return time.time() - self._time_detected < 1.0
+        return time() - self._time_detected < 1.0
 
     def update_ball(self, message):
-        self.blob_x = message.x
-        self.blob_y = message.y
-        self._time_detected = time.time()
-        self.get_logger().info("Ball detected: %.1f  %.1f "%(self.blob_x, self.blob_y))
+        #ignore 1 second previous message
+        msg_secs = message.header.stamp.sec
+        now = self.get_clock().now().to_msg().sec
+        if (msg_secs + 1 < now):
+            #self.get_logger().info("Stamp %d, %d" %(now, msg_secs ) )
+            return
+
+        self.blob_x = message.point.x
+        self.blob_y = message.point.y
+        self._time_detected = time()
+        self.get_logger().info("Detected x, y: %.2f  %.2f "%(self.blob_x, self.blob_y))
 
     def get_control_action(self):
         """

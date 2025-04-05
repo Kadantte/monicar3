@@ -11,7 +11,7 @@ Publishes commands to
     /dkcar/control/cmd_vel
 
 """
-import time
+from time import sleep, time
 import rclpy
 from rclpy.node import Node
 from rclpy.parameter import Parameter
@@ -59,7 +59,7 @@ class ChaseObject(Node):
 
     @property
     def is_detected(self):
-        return time.time() - self._time_detected < 1.0
+        return time() - self._time_detected < 1.0
 
     def update_object(self, message):
         #ignore 1 second previous message
@@ -75,7 +75,7 @@ class ChaseObject(Node):
             if (message.full_class_list[box] == self.DETECT_CLASS):
                 self.blob_x = float(message.bbx_center_x[idx]/PICTURE_SIZE_X*2 - 1.0)
                 self.blob_y = float(message.bbx_center_y[idx]/PICTURE_SIZE_Y*2 - 1.0)
-                self._time_detected = time.time()
+                self._time_detected = time()
 
                 self.get_logger().info("Detected: %.2f  %.2f"%(self.blob_x, self.blob_y))
             idx = idx + 1
