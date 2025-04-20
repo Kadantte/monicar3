@@ -1,10 +1,22 @@
 #!/usr/bin/env python
 import rclpy
 from rclpy.node import Node
+import sys, os
+from sensor_msgs.msg import Image
+from cv_bridge import CvBridge
+
+# Remove any existing cv2 modules
+if 'cv2' in sys.modules:
+    del sys.modules['cv2']
+
+# Force Python to use system OpenCV
+sys.path.insert(0, '/usr/lib/python3.8/dist-packages')
+
+# Now import cv2
 import cv2
 
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
+print(f"Using OpenCV version: {cv2.__version__}")
+print(f"OpenCV loaded from: {cv2.__file__}")
 
 def gstreamer_pipeline(
     capture_width=640,
