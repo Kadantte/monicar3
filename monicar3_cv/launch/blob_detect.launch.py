@@ -1,41 +1,25 @@
 #!/usr/bin/env python3
 # Author: ChangWhan Lee
+
 import os
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from ament_index_python.packages import get_package_share_directory
-
-def get_parameters(context):
-  # Get the config choice
-  color = LaunchConfiguration('color').perform(context)
-
-  package_share_dir = get_package_share_directory('monicar3_cv')
-  # Select the appropriate config file
-  if color == 'green':
-      config_path = os.path.join(package_share_dir, 'param', 'green.yaml')
-  elif color == 'yellow':
-      config_path = os.path.join(package_share_dir, 'param', 'yellow.yaml')
-  elif color == 'red':
-      config_path = os.path.join(package_share_dir, 'param', 'red.yaml')
-  else:
-      config_path = os.path.join(package_share_dir, 'param', 'blue.yaml')
-
-  return [Node(
-    package='monicar3_cv', executable='find_ball', name='blob_detect_node', 
-    output='screen',
-    parameters=[config_path]
-  )]
 
 def generate_launch_description():
-    color = DeclareLaunchArgument(
-        'color',
-        default_value='yellow',
-        description='Choose green, yellow, red, or blue'
+    cv_parameter = LaunchConfiguration(
+    'cv_parameter',
+    default=os.path.join(get_package_share_directory('monicar3_cv'),'param/camera.yaml')
     )
 
     return LaunchDescription([
-        color,
-        OpaqueFunction(function=get_parameters)
+        DeclareLaunchArgument('cv_parameter', default_value=cv_parameter),
+        Node(
+        package='monicar3_cv', executable='find_ball', name='blob_detect_node',
+        output='screen', emulate_tty=True,
+        parameters=[cv_parameter],
+        ),
     ])
