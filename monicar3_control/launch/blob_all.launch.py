@@ -33,7 +33,7 @@ def get_parameters(context):
 def generate_launch_description():
     # Include launch file
     launch_file_1 = os.path.join(
-        get_package_share_directory('monicar3_cv'), 'launch','usbcam.launch.py'
+        get_package_share_directory('monicar3_cv'), 'launch','csicam.launch.py'
     )
 
     include_cam = IncludeLaunchDescription(
