@@ -209,7 +209,9 @@ Find the object of the Jetson Nano on the screen and change the direction of the
 # camera publish, object x/y -> car move
 $ ros2 launch monicar3_control yolo_all.launch.py 
 ```
+
 #For debugging
+```bash
 # camera image publisher
 $ ros2 launch monicar3_cv csicam.launch.py
 
@@ -218,6 +220,7 @@ $ ros2 launch monicar3_yolo yolo.launch.py
 
 # object -> start, stop, turn left, turn left
 $ ros2 launch monicar3_control yolo_chase.launch.py
+```
 
 ### **5. Yolo11 traffic signal**
 
