@@ -10,6 +10,7 @@ def generate_launch_description():
         'yolo_parameter',
         default=os.path.join(
         get_package_share_directory('monicar3_yolo'),
+        #'config/yolo_ros_custom_pt.yaml'
         'config/yolo_ros_custom.yaml'
         )
     )
